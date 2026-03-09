@@ -1,15 +1,15 @@
 import { useMemo } from 'react'
-import { useHabitTracker } from '../hooks/useHabitTracker'
+import { useHabitStore } from '../store/habitStore'
 
 function DailyPage() {
-  const { state, toggleCompletionForDate } = useHabitTracker()
+  const { habits, completions, toggleCompletionForDate } = useHabitStore()
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
-  const todaysHabits = state.habits.filter((habit) => !habit.archived)
+  const todaysHabits = habits.filter((habit) => !habit.archived)
 
   const isCompleted = (habitId: string) =>
-    state.completions.some(
+    completions.some(
       (completion) =>
         completion.habitId === habitId &&
         completion.date === today &&

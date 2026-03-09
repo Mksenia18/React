@@ -1,0 +1,69 @@
+{
+  "habits": [
+    {
+      "id": "mmjbk8pi-57m52l2s",
+      "name": "кро",
+      "category": "health",
+      "targetFrequency": "daily",
+      "streakFreezeDays": 0,
+      "archived": false,
+      "createdAt": "2026-03-09T15:11:39.030Z"
+    },
+    {
+      "id": "mmjbkcrt-3s1zwj8s",
+      "name": "рр",
+      "category": "health",
+      "targetFrequency": "daily",
+      "streakFreezeDays": 0,
+      "archived": false,
+      "createdAt": "2026-03-09T15:11:44.297Z"
+    },
+    {
+      "id": "mmjbo1r0-fzg10jps",
+      "name": "лропор",
+      "category": "health",
+      "targetFrequency": "daily",
+      "streakFreezeDays": 0,
+      "archived": false,
+      "createdAt": "2026-03-09T15:14:36.636Z"
+    },
+    {
+      "id": "mmjc97ty-b13h9eqi",
+      "name": "оп",
+      "category": "learning",
+      "targetFrequency": "custom",
+      "streakFreezeDays": 0,
+      "archived": false,
+      "createdAt": "2026-03-09T15:31:04.294Z"
+    },
+    {
+      "id": "mmjc9pku-82p3mmb9",
+      "name": "онпр",
+      "category": "mindfulness",
+      "targetFrequency": "weekdays",
+      "streakFreezeDays": 0,
+      "archived": false,
+      "createdAt": "2026-03-09T15:31:27.294Z"
+    }
+  ],
+  "completions": [
+    {
+      "id": "mmjbkep8-j52r0ifr",
+      "habitId": "mmjbk8pi-57m52l2s",
+      "date": "2026-03-09",
+      "completed": true
+    },
+    {
+      "id": "mmjbo5xt-uz10tz2c",
+      "habitId": "mmjbo1r0-fzg10jps",
+      "date": "2026-03-09",
+      "completed": true
+    },
+    {
+      "id": "mmjc9gpf-gn77sj1c",
+      "habitId": "mmjc97ty-b13h9eqi",
+      "date": "2026-03-09",
+      "completed": true
+    }
+  ]
+}

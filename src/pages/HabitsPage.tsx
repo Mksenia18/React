@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useHabitTracker } from '../hooks/useHabitTracker'
+import { useHabitStore } from '../store/habitStore'
 import type { HabitCategory, HabitFrequency } from '../types'
 
 function HabitsPage() {
-  const { state, addHabit, archiveHabit, deleteHabit, resetAll } = useHabitTracker()
+  const { habits, habitStats, completions, addHabit, deleteHabit } = useHabitStore()
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState<HabitCategory>('health')
@@ -21,8 +21,21 @@ function HabitsPage() {
     setName('')
   }
 
-  const activeHabits = state.habits.filter((habit) => !habit.archived)
-  const archivedHabits = state.habits.filter((habit) => habit.archived)
+  const activeHabits = habits.filter((habit) => !habit.archived)
+  const archivedHabits = habits.filter((habit) => habit.archived)
+
+  const computeLast7Days = () => {
+    const days: string[] = []
+    const today = new Date()
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - offset)
+      days.push(date.toISOString().slice(0, 10))
+    }
+    return days
+  }
+
+  const last7Days = computeLast7Days()
 
   return (
     <div className="page">
@@ -68,11 +81,6 @@ function HabitsPage() {
           </label>
 
           <button type="submit">Add Habit</button>
-          {state.habits.length > 0 && (
-            <button type="button" onClick={resetAll}>
-              Reset All
-            </button>
-          )}
         </form>
       </section>
 
@@ -83,23 +91,49 @@ function HabitsPage() {
         ) : (
           <ul className="habit-list">
             {activeHabits.map((habit) => {
-              const stats = state.habitStats.find((entry) => entry.habitId === habit.id)
+              const stats = habitStats.find((entry) => entry.habitId === habit.id)
+
               return (
-                <li key={habit.id}>
-                  <div>
-                    <strong>{habit.name}</strong> ({habit.category} – {habit.targetFrequency})
+                <li key={habit.id} className="habit-card">
+                  <div className="habit-header">
+                    <div className="habit-name">{habit.name}</div>
+                    <div className="habit-meta">
+                      {habit.category} · {habit.targetFrequency}
+                    </div>
                   </div>
                   {stats && (
                     <div className="habit-stats">
-                      Streak: {stats.currentStreak} days (best {stats.longestStreak}) ·
-                      Completion rate: {stats.completionRate}%
+                      Streak: {stats.currentStreak} days (best {stats.longestStreak}) · Completion
+                      rate: {stats.completionRate}%
                     </div>
                   )}
-                  <div className="habit-actions">
-                    <button type="button" onClick={() => archiveHabit(habit.id)}>
-                      Archive
-                    </button>
-                    <button type="button" onClick={() => deleteHabit(habit.id)}>
+                  <div className="habit-chart">
+                    {last7Days.map((day) => {
+                      const completedOnDay = completions.some(
+                        (completion) =>
+                          completion.habitId === habit.id &&
+                          completion.date === day &&
+                          completion.completed,
+                      )
+                      return (
+                        <div
+                          key={day}
+                          className={`habit-chart-day${
+                            completedOnDay ? ' habit-chart-day--completed' : ''
+                          }`}
+                        />
+                      )
+                    })}
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => deleteHabit(habit.id)}
+                      style={{
+                        background: '#ef4444',
+                        boxShadow: '0 8px 16px rgba(239,68,68,0.25)',
+                      }}
+                    >
                       Delete
                     </button>
                   </div>

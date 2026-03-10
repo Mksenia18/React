@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useAuthStore } from '../store/authStore'
+import { habitApi } from '../services/api'
 
 function HomePage() {
   const { userId, email, loading, error, register, login, logout } = useAuthStore()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [formEmail, setFormEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [serverData, setServerData] = useState<string | null>(null)
+  const [serverDataError, setServerDataError] = useState<string | null>(null)
+  const [serverDataLoading, setServerDataLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -15,6 +19,20 @@ function HomePage() {
       await login(formEmail.trim(), password)
     } else {
       await register(formEmail.trim(), password)
+    }
+  }
+
+  const handleLoadServerData = async () => {
+    if (!userId) return
+    setServerDataLoading(true)
+    setServerDataError(null)
+    try {
+      const data = await habitApi.loadState(userId)
+      setServerData(JSON.stringify({ userId, email, ...data }, null, 2))
+    } catch (e) {
+      setServerDataError(e instanceof Error ? e.message : 'Failed to load server data')
+    } finally {
+      setServerDataLoading(false)
     }
   }
 
@@ -30,9 +48,18 @@ function HomePage() {
             <p>
               Signed in as <strong>{email}</strong>
             </p>
-            <button type="button" onClick={logout}>
-              Log out
-            </button>
+            <div className="auth-actions">
+              <button type="button" onClick={logout}>
+                Log out
+              </button>
+              <button type="button" onClick={handleLoadServerData} disabled={serverDataLoading}>
+                {serverDataLoading ? 'Loading…' : 'Show my server data'}
+              </button>
+            </div>
+            {serverDataError && <p className="auth-error">{serverDataError}</p>}
+            {serverData && (
+              <pre className="data-preview">{serverData}</pre>
+            )}
           </div>
         ) : (
           <div className="auth-card">

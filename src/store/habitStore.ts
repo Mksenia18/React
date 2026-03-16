@@ -124,6 +124,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
   ...createEmptyState(),
   loading: false,
   error: null,
+  userId: null,
 
   initFromBackend: async () => {
     const userId = get().userId
@@ -192,6 +193,11 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       void habitApi.saveState(prev.userId, {
         habits: draft.habits,
         completions: draft.completions,
+      }).catch((error) => {
+        set((current) => ({
+          ...current,
+          error: error instanceof Error ? error.message : 'Failed to save state',
+        }))
       })
 
       return {
@@ -235,6 +241,11 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       void habitApi.saveState(prev.userId, {
         habits: draft.habits,
         completions: draft.completions,
+      }).catch((error) => {
+        set((current) => ({
+          ...current,
+          error: error instanceof Error ? error.message : 'Failed to save state',
+        }))
       })
 
       return {
@@ -263,6 +274,11 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       void habitApi.saveState(prev.userId, {
         habits: draft.habits,
         completions: draft.completions,
+      }).catch((error) => {
+        set((current) => ({
+          ...current,
+          error: error instanceof Error ? error.message : 'Failed to save state',
+        }))
       })
 
       return {

@@ -69,6 +69,7 @@ All backend interactions go through `src/services/api.ts`:
   - `GET /api/state` – returns current `habits` and `completions`.
   - `POST /api/state` – saves `habits` and `completions`.
 - The Vite dev server proxies `/api` to `http://localhost:4000` (see `vite.config.ts`).
+- Backend base path is configured in `src/services/api-config.ts` as `API_BASE`.
 
 When adding new server operations:
 
@@ -88,6 +89,8 @@ High-level layout:
   - `HomePage.tsx` – overview.
   - `HabitsPage.tsx` – uses `useHabitStore` to add/list habits and show stats.
   - `DailyPage.tsx` – uses `useHabitStore` to show today’s checklist and toggle completion.
+  - `SettingsPage.tsx` – account page with logout.
+  - `AboutPage.tsx` – project overview and “Assemble First” explanation.
 - `server/index.js` – Express backend with file-based persistence (`server/state.json`).
 
 Naming:
@@ -116,6 +119,13 @@ When adding a new domain operation or feature, follow this step-down template:
    - Cover both normal and edge cases (e.g., unknown IDs, empty arrays).
 
 Always keep updates immutable, respect the existing state shape (`loading`, `error`), and avoid calling `fetch` directly from components.
+
+## Project 5 Notes (End-to-End Assembly)
+
+- Backend choice: **custom Express API** with file persistence (`server/state.json`).
+- Auth: `src/store/authStore.ts` uses `authApi` in `src/services/api.ts`, and persists session in `localStorage`.
+- Routing: all pages must be reachable via navigation links (no typing URLs).
+- Convention: components/hooks should never call `fetch` directly; they must use `src/services/api.ts`.
 
 ## Agent Instructions for Habit Tracker Repo
 

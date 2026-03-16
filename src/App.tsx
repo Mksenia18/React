@@ -3,6 +3,8 @@ import { Link, Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage.tsx'
 import HabitsPage from './pages/HabitsPage.tsx'
 import DailyPage from './pages/DailyPage.tsx'
+import SettingsPage from './pages/SettingsPage.tsx'
+import AboutPage from './pages/AboutPage.tsx'
 import { useAuthStore } from './store/authStore'
 import { useHabitStore } from './store/habitStore'
 import './App.css'
@@ -31,6 +33,8 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/habits">Habits</Link>
           <Link to="/daily">Daily</Link>
+          <Link to="/settings">Settings</Link>
+          <Link to="/about">About</Link>
         </div>
         {userId && (
           <div className="nav-user">
@@ -43,6 +47,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/habits" element={<HabitsPage />} />
           <Route path="/daily" element={<DailyPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </main>
     </>

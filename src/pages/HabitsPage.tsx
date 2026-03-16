@@ -3,7 +3,7 @@ import { useHabitStore } from '../store/habitStore'
 import type { HabitCategory, HabitFrequency } from '../types'
 
 function HabitsPage() {
-  const { habits, habitStats, completions, addHabit, deleteHabit } = useHabitStore()
+  const { habits, habitStats, completions, loading, error, addHabit, deleteHabit } = useHabitStore()
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState<HabitCategory>('health')
@@ -40,6 +40,8 @@ function HabitsPage() {
   return (
     <div className="page">
       <h1>My Habits</h1>
+      {loading && <p>Loading…</p>}
+      {error && <p style={{ color: 'crimson' }}>{error}</p>}
 
       <section>
         <h2>Create a Habit</h2>

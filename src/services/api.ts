@@ -1,4 +1,5 @@
 import type { AppState, Habit, HabitCompletion } from '../types'
+import { API_BASE } from './api-config'
 
 export interface HabitBackendState {
   habits: Habit[];
@@ -20,102 +21,87 @@ export interface AuthApi {
   login: (email: string, password: string) => Promise<AuthUser>;
 }
 
-const emptyState: HabitBackendState = {
-  habits: [],
-  completions: [],
-}
-
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID()
-  }
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-}
-
 export const habitApi: HabitApi = {
   async loadState(userId) {
-    try {
-      const response = await fetch('/api/state', {
-        headers: {
-          'x-user-id': userId,
-        },
-      })
-      if (!response.ok) {
-        return emptyState
-      }
-      const data = (await response.json()) as Partial<AppState>
-      return {
-        habits: data.habits ?? [],
-        completions: data.completions ?? [],
-      }
-    } catch {
-      return emptyState
+    const response = await fetch(`${API_BASE}/state`, {
+      headers: {
+        'x-user-id': userId,
+      },
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to load state (${response.status})`)
+    }
+    const data = (await response.json()) as Partial<AppState>
+    return {
+      habits: data.habits ?? [],
+      completions: data.completions ?? [],
     }
   },
 
   async saveState(userId, state) {
-    try {
-      await fetch('/api/state', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId,
-        },
-        body: JSON.stringify(state),
-      })
-    } catch {
-      // placeholder: ignore network errors for now
+    const response = await fetch(`${API_BASE}/state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId,
+      },
+      body: JSON.stringify(state),
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to save state (${response.status})`)
     }
   },
 }
 
 export const authApi: AuthApi = {
   async register(email, password) {
-    try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+    const response = await fetch(`${API_BASE}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-      if (response.ok) {
-        const data = (await response.json()) as AuthUser
-        return data
+    if (!response.ok) {
+      let message = `Registration failed (${response.status})`
+      try {
+        const data = (await response.json()) as { error?: unknown }
+        if (typeof data.error === 'string' && data.error.trim()) {
+          message = data.error
+        }
+      } catch {
+        // ignore parse errors
       }
-    } catch {
-      // fall back to local-only user
+      throw new Error(message)
     }
 
-    return {
-      userId: generateId(),
-      email,
-    }
+    return (await response.json()) as AuthUser
   },
 
   async login(email, password) {
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+    const response = await fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-      if (response.ok) {
-        const data = (await response.json()) as AuthUser
-        return data
+    if (!response.ok) {
+      let message = `Login failed (${response.status})`
+      try {
+        const data = (await response.json()) as { error?: unknown }
+        if (typeof data.error === 'string' && data.error.trim()) {
+          message = data.error
+        }
+      } catch {
+        // ignore parse errors
       }
-    } catch {
-      // fall back to local-only user
+      throw new Error(message)
     }
 
-    return {
-      userId: generateId(),
-      email,
-    }
+    return (await response.json()) as AuthUser
   },
 }
 

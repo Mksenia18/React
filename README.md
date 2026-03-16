@@ -97,3 +97,33 @@ The tests live in `src/hooks/useHabitTracker.test.ts` and cover:
 - Router setup and page scaffolding (file structure, Routes, Link navigation) were generated with AI; structure and naming were reviewed for consistency with the project requirements.
 - For Project 3, AI was used to help design the `useHabitTracker` hook API, implement immutable state updates, scaffold Vitest/@testing-library tests, and refine documentation. All code and tests were reviewed and understood before inclusion.
 
+## Project 5: End-to-End Assembly with Persistence
+
+### Backend choice
+
+**Custom Express backend + file-based persistence** (`server/index.js` + `server/state.json`) because it is the simplest way to get real, user-specific persistence working end-to-end without introducing a third-party platform.
+
+### Authentication approach
+
+**Email/password auth** via backend endpoints (`POST /api/register`, `POST /api/login`). The frontend persists the session in `localStorage` via `src/store/authStore.ts` so auth survives reload.
+
+### Feature verification table
+
+| Feature | UI trigger | Visible result | Persists after reload |
+|---|---|---|---|
+| Register account | Home → Register form → submit | Shows signed-in email | Yes |
+| Log in | Home → Log in form → submit | Shows signed-in email | Yes |
+| Log out | Home/Settings → Log out | Returns to signed-out state | Yes |
+| Add habit | Habits → Add habit form | Habit appears in list | Yes |
+| Delete habit | Habits → Delete button | Habit disappears | Yes |
+| Toggle completion | Daily → Toggle checkbox/button | Completion changes + stats update | Yes |
+| Load persisted data | Refresh page after changes | State restored for user | Yes |
+
+### How to run
+
+```bash
+npm install
+npm run server
+npm run dev
+```
+

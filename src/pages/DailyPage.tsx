@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useHabitStore } from '../store/habitStore'
 
 function DailyPage() {
-  const { habits, completions, toggleCompletionForDate } = useHabitStore()
+  const { habits, completions, loading, error, toggleCompletionForDate } = useHabitStore()
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
@@ -20,6 +20,8 @@ function DailyPage() {
     <div className="page">
       <h1>Daily Checklist</h1>
       <p>Your daily list of active habits to mark complete or incomplete.</p>
+      {loading && <p>Loading…</p>}
+      {error && <p style={{ color: 'crimson' }}>{error}</p>}
 
       {todaysHabits.length === 0 ? (
         <p>No habits for today yet. Go to the Habits page to add one.</p>

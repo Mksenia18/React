@@ -58,6 +58,60 @@ function writeState(nextState) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(safeState, null, 2), 'utf8')
 }
 
+function mergeUserData(dataByUserId) {
+  const allHabits = []
+  const allCompletions = []
+
+  for (const value of Object.values(dataByUserId ?? {})) {
+    if (!value || typeof value !== 'object') continue
+    if (Array.isArray(value.habits)) {
+      allHabits.push(...value.habits)
+    }
+    if (Array.isArray(value.completions)) {
+      allCompletions.push(...value.completions)
+    }
+  }
+
+  const seenHabitIds = new Set()
+  const habits = allHabits.filter((habit) => {
+    const id = habit?.id
+    if (typeof id !== 'string' || !id) return false
+    if (seenHabitIds.has(id)) return false
+    seenHabitIds.add(id)
+    return true
+  })
+
+  const seenCompletionIds = new Set()
+  const completions = allCompletions.filter((completion) => {
+    const id = completion?.id
+    if (typeof id !== 'string' || !id) return false
+    if (seenCompletionIds.has(id)) return false
+    seenCompletionIds.add(id)
+    return true
+  })
+
+  return { habits, completions }
+}
+
+function bootstrapUserIfMissing(state, email, password) {
+  const hasUsers = state.users.length > 0
+  if (hasUsers) return null
+
+  const userId = generateId()
+  const userData = mergeUserData(state.dataByUserId)
+
+  const nextState = {
+    ...state,
+    users: [{ id: userId, email, password }],
+    dataByUserId: {
+      [userId]: userData,
+    },
+  }
+
+  writeState(nextState)
+  return { userId, email }
+}
+
 app.post('/api/register', (req, res) => {
   const { email, password } = req.body ?? {}
   if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
@@ -66,6 +120,12 @@ app.post('/api/register', (req, res) => {
   }
 
   const state = readState()
+  const bootstrapped = bootstrapUserIfMissing(state, email, password)
+  if (bootstrapped) {
+    res.status(201).json(bootstrapped)
+    return
+  }
+
   const existingUser = state.users.find((user) => user.email === email)
   if (existingUser) {
     res.status(409).json({ error: 'User already exists' })
@@ -100,6 +160,12 @@ app.post('/api/login', (req, res) => {
   }
 
   const state = readState()
+  const bootstrapped = bootstrapUserIfMissing(state, email, password)
+  if (bootstrapped) {
+    res.json(bootstrapped)
+    return
+  }
+
   const user = state.users.find((u) => u.email === email && u.password === password)
   if (!user) {
     res.status(401).json({ error: 'Invalid credentials' })

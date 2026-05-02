@@ -148,6 +148,30 @@
   color: #b91c1c;
 }
 
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.status-badge {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.7rem;
+  font-size: 0.9rem;
+}
+
+.status-badge--loading {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.status-badge--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 section {
   margin-bottom: 2rem;
 }
@@ -229,6 +253,10 @@ section {
   color: #6b7280;
 }
 
+.habit-actions {
+  margin-top: 0.5rem;
+}
+
 .habit-chart {
   margin-top: 0.2rem;
   display: flex;
@@ -268,6 +296,30 @@ section {
 .daily-item input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
+}
+
+.daily-item-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.button-danger {
+  background: #ef4444;
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.25);
+}
+
+.button-danger:hover {
+  box-shadow: 0 12px 20px rgba(239, 68, 68, 0.33);
+}
+
+.empty-state {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  color: #4b5563;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
 }
 
 @media (max-width: 768px) {

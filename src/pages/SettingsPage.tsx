@@ -1,15 +1,15 @@
 import { useAuthStore } from '../store/authStore'
+import { AppLayout } from '../components/AppLayout'
 
 function SettingsPage() {
   const { userId, email, logout } = useAuthStore()
 
   return (
-    <div className="page">
-      <h1>Settings</h1>
+    <AppLayout title="Settings">
       <section>
         <h2>Account</h2>
         {userId ? (
-          <div>
+          <div className="auth-card">
             <p>
               Signed in as <strong>{email}</strong>
             </p>
@@ -21,7 +21,7 @@ function SettingsPage() {
           <p>You are not signed in. Go to Home to log in or register.</p>
         )}
       </section>
-    </div>
+    </AppLayout>
   )
 }
 

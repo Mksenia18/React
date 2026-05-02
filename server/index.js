@@ -9,12 +9,23 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 4000
 const DATA_FILE = path.join(__dirname, 'state.json')
+const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || '*'
 
 function generateId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 app.use(express.json())
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type,x-user-id')
+  if (req.method === 'OPTIONS') {
+    res.status(204).end()
+    return
+  }
+  next()
+})
 
 function ensureFile() {
   if (!fs.existsSync(DATA_FILE)) {
@@ -173,6 +184,10 @@ app.post('/api/login', (req, res) => {
   }
 
   res.json({ userId: user.id, email: user.email })
+})
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true })
 })
 
 app.get('/api/state', (req, res) => {

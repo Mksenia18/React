@@ -1,6 +1,23 @@
-# Habit Tracker – Project 2 Foundation
+# Live URL: https://YOUR-FRONTEND-URL.vercel.app
+# API URL: https://YOUR-BACKEND-URL.onrender.com/api
+
+# Habit Tracker – Final Project
 
 A Habit Tracker app for tracking daily habits with streaks, frequencies, and statistics. This repository contains the **Project 2: App Foundation** setup: TypeScript types, React Router, and initial page components.
+
+## Deployment (Required For Final Demo)
+
+1. Deploy backend (`server/index.js`) to Render/Railway/Fly and copy backend base URL.
+2. Set backend env var `CORS_ORIGIN` to your frontend URL.
+3. Deploy frontend to Vercel/Netlify with env var:
+   - `VITE_API_BASE=https://YOUR-BACKEND-URL.onrender.com/api`
+4. Put both public URLs at the top of this README (lines 1-2).
+
+### Quick Host Setup
+
+- **Frontend (Vercel/Netlify)**: build command `npm run build`, output `dist`
+- **Backend (Render)**: use included `render.yaml` or `npm run server`
+- **Health check**: `GET /api/health`
 
 ## Theme
 

@@ -4,6 +4,11 @@
       "id": "mmt6j4q5-qvkma8tn",
       "email": "mksenia6002@gmail.com",
       "password": "asdfrewq2006"
+    },
+    {
+      "id": "mmuc3ku0-fizatiih",
+      "email": "mkseniia6002@gmail.com",
+      "password": "asdfrewq2006"
     }
   ],
   "dataByUserId": {
@@ -54,6 +59,42 @@
           "streakFreezeDays": 0,
           "archived": false,
           "createdAt": "2026-03-16T12:49:28.284Z"
+        },
+        {
+          "id": "mmue4o1w-fupxc6dh",
+          "name": "гппг",
+          "category": "health",
+          "targetFrequency": "daily",
+          "streakFreezeDays": 0,
+          "archived": false,
+          "createdAt": "2026-03-17T09:08:59.204Z"
+        },
+        {
+          "id": "mmuefd7z-xs0r9k68",
+          "name": "drink water",
+          "category": "health",
+          "targetFrequency": "daily",
+          "streakFreezeDays": 0,
+          "archived": false,
+          "createdAt": "2026-03-17T09:17:18.383Z"
+        },
+        {
+          "id": "mooocfkk-l5h543tj",
+          "name": "олвавы",
+          "category": "health",
+          "targetFrequency": "daily",
+          "streakFreezeDays": 0,
+          "archived": false,
+          "createdAt": "2026-05-02T18:27:45.236Z"
+        },
+        {
+          "id": "mooocjcl-b3dcpzjq",
+          "name": "лоилои",
+          "category": "health",
+          "targetFrequency": "daily",
+          "streakFreezeDays": 0,
+          "archived": false,
+          "createdAt": "2026-05-02T18:27:50.133Z"
         }
       ],
       "completions": [
@@ -68,8 +109,48 @@
           "habitId": "mmt6kd0c-rt4dwhhb",
           "date": "2026-03-16",
           "completed": true
+        },
+        {
+          "id": "mmua7c4c-o4dfcrg7",
+          "habitId": "mmt6jldc-ughrt6vt",
+          "date": "2026-03-17",
+          "completed": true
+        },
+        {
+          "id": "mmuefgxb-z1ants67",
+          "habitId": "mmuefd7z-xs0r9k68",
+          "date": "2026-03-17",
+          "completed": true
+        },
+        {
+          "id": "mooocnwi-uhjzli8g",
+          "habitId": "mmt6jldc-ughrt6vt",
+          "date": "2026-05-02",
+          "completed": true
+        },
+        {
+          "id": "mooocolx-ki2twuvz",
+          "habitId": "mmue4o1w-fupxc6dh",
+          "date": "2026-05-02",
+          "completed": true
+        },
+        {
+          "id": "mooocurp-rgdikq7i",
+          "habitId": "mooocfkk-l5h543tj",
+          "date": "2026-05-02",
+          "completed": true
+        },
+        {
+          "id": "mooocv9s-1ifxbnwd",
+          "habitId": "mooocjcl-b3dcpzjq",
+          "date": "2026-05-02",
+          "completed": true
         }
       ]
+    },
+    "mmuc3ku0-fizatiih": {
+      "habits": [],
+      "completions": []
     }
   }
 }

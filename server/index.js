@@ -9,7 +9,22 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 4000
 const DATA_FILE = path.join(__dirname, 'state.json')
-const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || '*'
+
+/** Comma-separated list, or * / empty = allow any (reflects request Origin when present). */
+function corsAllowOrigin(requestOrigin) {
+  const raw = process.env.CORS_ORIGIN?.trim()
+  if (!raw || raw === '*') {
+    return requestOrigin || '*'
+  }
+  const list = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  if (list.includes('*')) {
+    return requestOrigin || '*'
+  }
+  if (!requestOrigin) {
+    return null
+  }
+  return list.includes(requestOrigin) ? requestOrigin : null
+}
 
 function generateId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
@@ -17,9 +32,14 @@ function generateId() {
 
 app.use(express.json())
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN)
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Content-Type,x-user-id')
+  const origin = req.get('Origin')
+  const allow = corsAllowOrigin(origin)
+  if (allow) {
+    res.setHeader('Access-Control-Allow-Origin', allow)
+    res.setHeader('Vary', 'Origin')
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-user-id')
   if (req.method === 'OPTIONS') {
     res.status(204).end()
     return

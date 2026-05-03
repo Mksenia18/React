@@ -8,7 +8,7 @@ A Habit Tracker app for tracking daily habits with streaks, frequencies, and sta
 ## Deployment (Required For Final Demo)
 
 1. Deploy backend (`server/index.js`) to Render/Railway/Fly and copy backend base URL.
-2. Set backend env var `CORS_ORIGIN` to your frontend URL.
+2. Set backend env var `CORS_ORIGIN` to your frontend URL(s). Use the **exact** URL from the browser (no `/` at the end). If registration shows **Failed to fetch**, your `Origin` does not match `CORS_ORIGIN` — add every Vercel URL you use (production + preview), comma-separated, or set `CORS_ORIGIN=*` while debugging.
 3. Deploy frontend to Vercel/Netlify with env var:
    - `VITE_API_BASE=https://YOUR-BACKEND-URL.onrender.com/api`
 4. Put both public URLs at the top of this README (lines 1-2).

@@ -23,6 +23,17 @@ function completionDocId(habitId: string, date: string) {
   return `${habitId}_${date}`
 }
 
+/** Firestore rejects `undefined` field values; omit optional fields when unset. */
+function stripUndefinedFields<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      out[key] = value
+    }
+  }
+  return out
+}
+
 function habitFromFirestore(docId: string, data: Record<string, unknown>): Habit {
   return {
     id: docId,
@@ -91,7 +102,8 @@ export async function addHabitDocument(
 ): Promise<void> {
   const db = getFirestoreDb()
   const { id, ...rest } = habit
-  await setDoc(doc(db, habitsPath(uid), id), { ...rest })
+  const payload = stripUndefinedFields({ ...rest } as Record<string, unknown>)
+  await setDoc(doc(db, habitsPath(uid), id), payload)
 }
 
 export async function deleteHabitAndCompletions(uid: string, habitId: string): Promise<void> {

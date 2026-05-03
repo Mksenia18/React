@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { habitApi } from '../services/api'
 import type {
   AppState,
   DayOfWeek,
@@ -9,22 +8,29 @@ import type {
   HabitFrequency,
   HabitStats,
 } from '../types'
+import {
+  addHabitDocument,
+  deleteHabitAndCompletions,
+  setCompletionForDate,
+  subscribeUserCompletions,
+  subscribeUserHabits,
+} from '../services/firebase/habitFirestore'
 
 export interface HabitStoreState extends AppState {
-  loading: boolean;
-  error: string | null;
-  userId: string | null;
+  loading: boolean
+  error: string | null
+  userId: string | null
   addHabit: (input: {
-    name: string;
-    category: HabitCategory;
-    targetFrequency: HabitFrequency;
-    customDays?: DayOfWeek[];
-    streakFreezeDays?: number;
-  }) => void;
-  toggleCompletionForDate: (habitId: string, date: string) => void;
-  deleteHabit: (habitId: string) => void;
-  initFromBackend: () => Promise<void>;
-  setUser: (userId: string | null) => void;
+    name: string
+    category: HabitCategory
+    targetFrequency: HabitFrequency
+    customDays?: DayOfWeek[]
+    streakFreezeDays?: number
+  }) => void
+  toggleCompletionForDate: (habitId: string, date: string) => void
+  deleteHabit: (habitId: string) => void
+  initFromBackend: () => Promise<void>
+  setUser: (userId: string | null) => void
 }
 
 function createEmptyState(): AppState {
@@ -120,6 +126,19 @@ function recalculateStats(state: AppState): HabitStats[] {
   return stats
 }
 
+let habitUnsub: (() => void) | undefined
+let completionUnsub: (() => void) | undefined
+
+let latestHabits: Habit[] = []
+let latestCompletions: HabitCompletion[] = []
+
+function clearFirestoreListeners() {
+  habitUnsub?.()
+  completionUnsub?.()
+  habitUnsub = undefined
+  completionUnsub = undefined
+}
+
 export const useHabitStore = create<HabitStoreState>((set, get) => ({
   ...createEmptyState(),
   loading: false,
@@ -127,52 +146,81 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
   userId: null,
 
   initFromBackend: async () => {
-    const userId = get().userId
-    if (!userId) {
-      set((prev) => ({
-        ...prev,
-        habits: [],
-        completions: [],
-        habitStats: [],
-      }))
-      return
-    }
+    // Real-time sync is attached in setUser(); kept for call sites that still invoke it.
+    return
+  },
 
-    set((prev) => ({ ...prev, loading: true, error: null }))
-    try {
-      const data = await habitApi.loadState(userId)
-      const draft: AppState = {
-        habits: data.habits,
-        completions: data.completions,
-        habitStats: [],
-      }
-      const habitStats = recalculateStats(draft)
+  setUser: (userId) => {
+    clearFirestoreListeners()
+    latestHabits = []
+    latestCompletions = []
+
+    if (!userId) {
       set({
-        ...draft,
-        habitStats,
+        ...createEmptyState(),
+        userId: null,
         loading: false,
         error: null,
       })
+      return
+    }
+
+    set({
+      userId,
+      habits: [],
+      completions: [],
+      habitStats: [],
+      loading: true,
+      error: null,
+    })
+
+    const applySnapshot = () => {
+      const draft: AppState = {
+        habits: latestHabits,
+        completions: latestCompletions,
+        habitStats: [],
+      }
+      set({
+        ...draft,
+        habitStats: recalculateStats(draft),
+        loading: false,
+      })
+    }
+
+    try {
+      habitUnsub = subscribeUserHabits(
+        userId,
+        (habits) => {
+          latestHabits = habits
+          applySnapshot()
+        },
+        (message) => {
+          set((prev) => ({ ...prev, error: message, loading: false }))
+        },
+      )
+
+      completionUnsub = subscribeUserCompletions(
+        userId,
+        (completions) => {
+          latestCompletions = completions
+          applySnapshot()
+        },
+        (message) => {
+          set((prev) => ({ ...prev, error: message, loading: false }))
+        },
+      )
     } catch (error) {
       set((prev) => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load state',
+        error: error instanceof Error ? error.message : 'Failed to subscribe to habits',
       }))
     }
   },
 
-  setUser: (userId) => {
-    set((prev) => ({
-      ...prev,
-      userId,
-      habits: userId ? prev.habits : [],
-      completions: userId ? prev.completions : [],
-      habitStats: userId ? prev.habitStats : [],
-    }))
-  },
-
   addHabit: (input) => {
+    const uid = get().userId
+    if (!uid) return
     const nowIso = new Date().toISOString()
     const newHabit: Habit = {
       id: generateId(),
@@ -185,109 +233,40 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       createdAt: nowIso,
     }
 
-    set((prev) => {
-      if (!prev.userId) return prev
-      const habits = [...prev.habits, newHabit]
-      const draft: AppState = { habits, completions: prev.completions, habitStats: prev.habitStats }
-
-      void habitApi.saveState(prev.userId, {
-        habits: draft.habits,
-        completions: draft.completions,
-      }).catch((error) => {
-        set((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to save state',
-        }))
-      })
-
-      return {
-        ...draft,
-        loading: prev.loading,
-        error: prev.error,
-        habitStats: recalculateStats(draft),
-      }
+    void addHabitDocument(uid, newHabit).catch((error) => {
+      set((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Failed to save habit',
+      }))
     })
   },
 
   toggleCompletionForDate: (habitId, date) => {
-    set((prev) => {
-      if (!prev.userId) return prev
-      const habitExists = prev.habits.some((habit) => habit.id === habitId)
-      if (!habitExists) return prev
+    const uid = get().userId
+    if (!uid) return
+    const habitExists = get().habits.some((habit) => habit.id === habitId)
+    if (!habitExists) return
 
-      const completions: HabitCompletion[] = [...prev.completions]
-      const existingIndex = completions.findIndex(
-        (entry) => entry.habitId === habitId && entry.date === date,
-      )
+    const existing = get().completions.find((c) => c.habitId === habitId && c.date === date)
+    const nextCompleted = existing ? !existing.completed : true
 
-      if (existingIndex === -1) {
-        completions.push({
-          id: generateId(),
-          habitId,
-          date,
-          completed: true,
-        })
-      } else {
-        const existing = completions[existingIndex]
-        completions[existingIndex] = { ...existing, completed: !existing.completed }
-      }
-
-      const draft: AppState = {
-        habits: prev.habits,
-        completions,
-        habitStats: prev.habitStats,
-      }
-
-      void habitApi.saveState(prev.userId, {
-        habits: draft.habits,
-        completions: draft.completions,
-      }).catch((error) => {
-        set((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to save state',
-        }))
-      })
-
-      return {
-        ...draft,
-        loading: prev.loading,
-        error: prev.error,
-        habitStats: recalculateStats(draft),
-      }
+    void setCompletionForDate(uid, habitId, date, nextCompleted).catch((error) => {
+      set((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Failed to save completion',
+      }))
     })
   },
+
   deleteHabit: (habitId) => {
-    set((prev) => {
-      if (!prev.userId) return prev
+    const uid = get().userId
+    if (!uid) return
 
-      const habits = prev.habits.filter((habit) => habit.id !== habitId)
-      const completions = prev.completions.filter(
-        (completion) => completion.habitId !== habitId,
-      )
-
-      const draft: AppState = {
-        habits,
-        completions,
-        habitStats: prev.habitStats,
-      }
-
-      void habitApi.saveState(prev.userId, {
-        habits: draft.habits,
-        completions: draft.completions,
-      }).catch((error) => {
-        set((current) => ({
-          ...current,
-          error: error instanceof Error ? error.message : 'Failed to save state',
-        }))
-      })
-
-      return {
-        ...draft,
-        loading: prev.loading,
-        error: prev.error,
-        habitStats: recalculateStats(draft),
-      }
+    void deleteHabitAndCompletions(uid, habitId).catch((error) => {
+      set((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Failed to delete habit',
+      }))
     })
   },
 }))
-

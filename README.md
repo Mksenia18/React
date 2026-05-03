@@ -1,23 +1,31 @@
 # Live URL: https://YOUR-FRONTEND-URL.vercel.app
-# API URL: https://YOUR-BACKEND-URL.onrender.com/api
 
 # Habit Tracker – Final Project
 
-A Habit Tracker app for tracking daily habits with streaks, frequencies, and statistics. This repository contains the **Project 2: App Foundation** setup: TypeScript types, React Router, and initial page components.
+A Habit Tracker app for tracking daily habits with streaks, frequencies, and statistics. Auth and data use **Firebase** (Authentication + Firestore).
 
-## Deployment (Required For Final Demo)
+## Firebase setup (required)
 
-1. Deploy backend (`server/index.js`) to Render/Railway/Fly and copy backend base URL.
-2. Set backend env var `CORS_ORIGIN` to your frontend URL(s). Use the **exact** URL from the browser (no `/` at the end). If registration shows **Failed to fetch**, your `Origin` does not match `CORS_ORIGIN` — add every Vercel URL you use (production + preview), comma-separated, or set `CORS_ORIGIN=*` while debugging.
-3. Deploy frontend to Vercel/Netlify with env var:
-   - `VITE_API_BASE=https://YOUR-BACKEND-URL.onrender.com/api`
-4. Put both public URLs at the top of this README (lines 1-2).
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/).
+2. Enable **Authentication → Sign-in method → Email/Password**.
+3. Enable **Firestore Database** (start in production mode, then deploy rules from `firestore.rules`).
+4. Register a **Web app** and copy the config into `.env` (see `.env.example`). All keys must be prefixed with `VITE_` for Vite.
+5. Deploy Firestore rules (CLI or Console): only `users/{uid}/habits/*` and `users/{uid}/completions/*` are used.
+
+## Deploy frontend (e.g. Vercel)
+
+1. Import this repo and set **Environment Variables** to match `.env.example` (`VITE_FIREBASE_*`).
+2. Build: `npm run build`, output directory: `dist`.
+3. Put your public app URL on line 1 of this README.
+
+### Optional legacy server
+
+The `server/` Express app is **not** used by the main UI when Firebase is configured. You can ignore it for deployment.
 
 ### Quick Host Setup
 
 - **Frontend (Vercel/Netlify)**: build command `npm run build`, output `dist`
-- **Backend (Render)**: use included `render.yaml` or `npm run server`
-- **Health check**: `GET /api/health`
+- **Data + auth**: Firebase Firestore + Firebase Auth
 
 ## Theme
 
@@ -85,10 +93,7 @@ The hook is implemented in `src/hooks/useHabitTracker.ts` and returns:
 
 All updates are immutable and the hook recomputes `habitStats` (streaks, completion rate, totals) whenever relevant data changes.
 
-The hook also:
-
-- Loads initial state from a small Express backend (`GET /api/state`).
-- Saves every change to that backend (`POST /api/state`) and mirrors it in `localStorage` as a fallback.
+The hook also persists to **browser `localStorage`** for tests and demos. The live app uses **`useHabitStore` + Firebase Firestore** for cloud sync.
 
 ### Running Tests
 
@@ -118,11 +123,11 @@ The tests live in `src/hooks/useHabitTracker.test.ts` and cover:
 
 ### Backend choice
 
-**Custom Express backend + file-based persistence** (`server/index.js` + `server/state.json`) because it is the simplest way to get real, user-specific persistence working end-to-end without introducing a third-party platform.
+**Firebase Authentication + Cloud Firestore** for per-user habits and completions. Rules live in `firestore.rules`.
 
 ### Authentication approach
 
-**Email/password auth** via backend endpoints (`POST /api/register`, `POST /api/login`). The frontend persists the session in `localStorage` via `src/store/authStore.ts` so auth survives reload.
+**Email/password** via Firebase Auth (`src/store/authStore.ts`). Sessions are restored automatically by the Firebase client SDK.
 
 ### Feature verification table
 

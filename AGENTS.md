@@ -9,7 +9,7 @@ Core entities (defined in `src/types.ts`):
 - `HabitStats` – derived statistics per habit (current/longest streak, completion rate, totals).
 - `AppState` – collections of these entities for the whole app.
 
-Tech stack: React + TypeScript (strict), Vite, React Router, Vitest + @testing-library/react, Express backend for simple persistence.
+Tech stack: React + TypeScript (strict), Vite, React Router, Vitest + @testing-library/react, Firebase (Auth + Firestore) for persistence. Optional Express server remains in `server/` for reference only.
 
 ## State Management Approach
 
@@ -58,24 +58,21 @@ Key points:
 - `AppState` contains the domain collections; the store extends it with `loading`/`error` for async operations.
 - Store operations (`addHabit`, `toggleCompletionForDate`) update state immutably and recompute `habitStats`.
 
-## API Conventions
+## Firebase / service layer
 
-All backend interactions go through `src/services/api.ts`:
+All cloud persistence goes through **`src/services/firebase/`**:
 
-- Interface:
-  - `HabitBackendState` – `{ habits: Habit[]; completions: HabitCompletion[] }`.
-  - `HabitApi` – `{ loadState(): Promise<HabitBackendState>; saveState(state): Promise<void> }`.
-- Implementation: `habitApi` uses **`fetch`** and the Express backend endpoints:
-  - `GET /api/state` – returns current `habits` and `completions`.
-  - `POST /api/state` – saves `habits` and `completions`.
-- The Vite dev server proxies `/api` to `http://localhost:4000` (see `vite.config.ts`).
-- Backend base path is configured in `src/services/api-config.ts` as `API_BASE`.
+- `client.ts` – initializes Firebase app, Auth, and Firestore from `VITE_FIREBASE_*` env vars.
+- `habitFirestore.ts` – Firestore reads/writes and real-time listeners for habits and completions.
+- `authErrors.ts` – maps Firebase Auth errors to user-facing messages.
 
-When adding new server operations:
+Stores (`authStore`, `habitStore`) call these modules; page components must not import Firebase SDKs directly.
 
-- Extend `HabitApi` with new methods.
-- Implement them in `habitApi` using `fetch` and the appropriate `/api/...` endpoints.
-- Call them from the store or custom hooks; do not call `fetch` directly from page components.
+When adding new persisted fields or collections:
+
+- Extend domain types in `src/types.ts`.
+- Add Firestore helpers in `src/services/firebase/` and wire from `habitStore` / `authStore`.
+- Update `firestore.rules` so only `request.auth.uid` can access that user’s data.
 
 ## File Structure
 
@@ -83,7 +80,7 @@ High-level layout:
 
 - `src/types.ts` – domain types (`Habit`, `HabitCompletion`, `HabitStats`, `AppState`).
 - `src/store/habitStore.ts` – Zustand store (`HabitStoreState`, `useHabitStore`).
-- `src/services/api.ts` – API interface and `habitApi` implementation.
+- `src/services/firebase/` – Firebase client and Firestore habit data access.
 - `src/hooks/useHabitTracker.ts` – custom hook from Project 3 (still valid for tests and examples).
 - `src/pages/` – page components:
   - `HomePage.tsx` – overview.
@@ -96,7 +93,7 @@ High-level layout:
 Naming:
 
 - Stores live under `src/store/` and are named `*Store.ts`.
-- Service/API modules live under `src/services/` and are named by domain (here `api.ts`).
+- Service modules live under `src/services/` (here `firebase/`).
 - Domain types live in `src/types.ts` and are reused everywhere.
 
 ## Adding New Features
@@ -108,9 +105,8 @@ When adding a new domain operation or feature, follow this step-down template:
 2. **Extend the store** (`src/store/habitStore.ts`):
    - Update `HabitStoreState` with any new fields or operations.
    - Implement operations using immutable updates and reuse `recalculateStats` when relevant.
-3. **Update the API layer** (`src/services/api.ts`):
-   - Extend `HabitApi` with new methods if backend support is required.
-   - Implement them in `habitApi` using `fetch` and the appropriate `/api/...` endpoints.
+3. **Update the Firebase layer** (`src/services/firebase/`):
+   - Add or adjust Firestore paths and helpers; keep stores thin.
 4. **Wire to the UI**:
    - Use `useHabitStore` in the relevant page/component to call the new operations.
    - Keep components focused on presentation and event wiring; avoid inline business logic.
@@ -118,14 +114,14 @@ When adding a new domain operation or feature, follow this step-down template:
    - For store logic, add or extend tests using Vitest and @testing-library/react hooks utilities.
    - Cover both normal and edge cases (e.g., unknown IDs, empty arrays).
 
-Always keep updates immutable, respect the existing state shape (`loading`, `error`), and avoid calling `fetch` directly from components.
+Always keep updates immutable, respect the existing state shape (`loading`, `error`), and avoid calling `fetch` or Firebase SDKs directly from page components.
 
 ## Project 5 Notes (End-to-End Assembly)
 
-- Backend choice: **custom Express API** with file persistence (`server/state.json`).
-- Auth: `src/store/authStore.ts` uses `authApi` in `src/services/api.ts`, and persists session in `localStorage`.
+- Persistence: **Firebase Auth + Firestore** (`src/services/firebase/`, `src/store/authStore.ts`, `src/store/habitStore.ts`).
+- Optional: **Express** in `server/` is not required for the Firebase-based app.
 - Routing: all pages must be reachable via navigation links (no typing URLs).
-- Convention: components/hooks should never call `fetch` directly; they must use `src/services/api.ts`.
+- Convention: components/hooks should not call `fetch` or Firebase directly; use stores and `src/services/firebase/`.
 
 ## Agent Instructions for Habit Tracker Repo
 

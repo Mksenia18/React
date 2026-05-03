@@ -1,48 +1,25 @@
 import { create } from 'zustand'
-import { authApi } from '../services/api'
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth'
+import { getFirebaseAuth } from '../services/firebase/client'
+import { mapFirebaseAuthError } from '../services/firebase/authErrors'
 
 export interface AuthState {
-  userId: string | null;
-  email: string | null;
-  loading: boolean;
-  error: string | null;
-  register: (email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  initFromStorage: () => void;
+  userId: string | null
+  email: string | null
+  loading: boolean
+  error: string | null
+  register: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+  initAuthListener: () => void
 }
 
-const STORAGE_KEY = 'habit-tracker-auth'
-
-function loadStoredUser():
-  | {
-      userId: string;
-      email: string;
-    }
-  | null {
-  if (typeof window === 'undefined') return null
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as { userId?: string; email?: string }
-    if (parsed && typeof parsed.userId === 'string' && typeof parsed.email === 'string') {
-      return { userId: parsed.userId, email: parsed.email }
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
-function saveStoredUser(user: { userId: string; email: string } | null) {
-  if (typeof window === 'undefined') return
-  if (!user) {
-    window.localStorage.removeItem(STORAGE_KEY)
-    return
-  }
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
-}
+let authListenerStarted = false
 
 export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
@@ -50,14 +27,23 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: false,
   error: null,
 
-  initFromStorage: () => {
-    const stored = loadStoredUser()
-    if (stored) {
+  initAuthListener: () => {
+    if (authListenerStarted) return
+    authListenerStarted = true
+    try {
+      const auth = getFirebaseAuth()
+      onAuthStateChanged(auth, (user) => {
+        set({
+          userId: user?.uid ?? null,
+          email: user?.email ?? null,
+          loading: false,
+          error: null,
+        })
+      })
+    } catch (error) {
       set({
-        userId: stored.userId,
-        email: stored.email,
+        error: error instanceof Error ? error.message : 'Firebase failed to initialize',
         loading: false,
-        error: null,
       })
     }
   },
@@ -65,20 +51,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (email, password) => {
     set((prev) => ({ ...prev, loading: true, error: null }))
     try {
-      const user = await authApi.register(email, password)
-      saveStoredUser(user)
-      set({
-        userId: user.userId,
-        email: user.email,
-        loading: false,
-        error: null,
-      })
+      const auth = getFirebaseAuth()
+      await createUserWithEmailAndPassword(auth, email, password)
+      set((prev) => ({ ...prev, loading: false }))
     } catch (error) {
       set({
         userId: null,
         email: null,
         loading: false,
-        error: error instanceof Error ? error.message : 'Registration failed',
+        error: mapFirebaseAuthError(error),
       })
     }
   },
@@ -86,32 +67,30 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set((prev) => ({ ...prev, loading: true, error: null }))
     try {
-      const user = await authApi.login(email, password)
-      saveStoredUser(user)
-      set({
-        userId: user.userId,
-        email: user.email,
-        loading: false,
-        error: null,
-      })
+      const auth = getFirebaseAuth()
+      await signInWithEmailAndPassword(auth, email, password)
+      set((prev) => ({ ...prev, loading: false }))
     } catch (error) {
       set({
         userId: null,
         email: null,
         loading: false,
-        error: error instanceof Error ? error.message : 'Login failed',
+        error: mapFirebaseAuthError(error),
       })
     }
   },
 
-  logout: () => {
-    saveStoredUser(null)
-    set({
-      userId: null,
-      email: null,
-      loading: false,
-      error: null,
-    })
+  logout: async () => {
+    set((prev) => ({ ...prev, loading: true, error: null }))
+    try {
+      await signOut(getFirebaseAuth())
+    } catch (error) {
+      set((prev) => ({
+        ...prev,
+        error: mapFirebaseAuthError(error),
+      }))
+    } finally {
+      set((prev) => ({ ...prev, loading: false }))
+    }
   },
 }))
-

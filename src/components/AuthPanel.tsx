@@ -76,7 +76,7 @@ function SignedOutAuth({ loading, error, onLogin, onRegister }: SignedOutProps) 
 
 interface SignedInProps {
   email: string | null
-  onLogout: () => void
+  onLogout: () => void | Promise<void>
 }
 
 function SignedInAuth({ email, onLogout }: SignedInProps) {
@@ -101,7 +101,7 @@ interface AuthPanelProps {
   error: string | null
   onLogin: (email: string, password: string) => Promise<void>
   onRegister: (email: string, password: string) => Promise<void>
-  onLogout: () => void
+  onLogout: () => void | Promise<void>
 }
 
 export function AuthPanel({ userId, email, loading, error, onLogin, onRegister, onLogout }: AuthPanelProps) {

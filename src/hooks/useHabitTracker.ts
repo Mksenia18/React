@@ -151,41 +151,6 @@ export function useHabitTracker(initialState?: AppState): HabitTrackerOperations
   )
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof fetch !== 'function') return
-
-    let cancelled = false
-
-    const loadFromServer = async () => {
-      try {
-        const response = await fetch('/api/state')
-        if (!response.ok) return
-        const data = (await response.json()) as Partial<AppState>
-        if (cancelled || !data || !Array.isArray(data.habits) || !Array.isArray(data.completions)) {
-          return
-        }
-
-        setState({
-          habits: data.habits,
-          completions: data.completions,
-          habitStats: recalculateStats({
-            habits: data.habits,
-            completions: data.completions,
-            habitStats: [],
-          }),
-        })
-      } catch {
-        // ignore server errors in the hook, keep local state
-      }
-    }
-
-    void loadFromServer()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -194,26 +159,6 @@ export function useHabitTracker(initialState?: AppState): HabitTrackerOperations
         completions: state.completions,
       }),
     )
-    if (typeof fetch !== 'function') return
-
-    const saveToServer = async () => {
-      try {
-        await fetch('/api/state', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            habits: state.habits,
-            completions: state.completions,
-          }),
-        })
-      } catch {
-        // ignore network errors, localStorage still keeps a copy
-      }
-    }
-
-    void saveToServer()
   }, [state.habits, state.completions])
 
   const addHabit: HabitTrackerOperations['addHabit'] = useCallback((input) => {

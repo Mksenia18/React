@@ -10,20 +10,16 @@ import { useHabitStore } from './store/habitStore'
 import './App.css'
 
 function App() {
-  const { userId, initFromStorage } = useAuthStore()
-  const initFromBackend = useHabitStore((state) => state.initFromBackend)
+  const { userId, initAuthListener } = useAuthStore()
   const setUser = useHabitStore((state) => state.setUser)
 
   useEffect(() => {
-    initFromStorage()
-  }, [initFromStorage])
+    initAuthListener()
+  }, [initAuthListener])
 
   useEffect(() => {
     setUser(userId)
-    if (userId) {
-      void initFromBackend()
-    }
-  }, [userId, initFromBackend, setUser])
+  }, [userId, setUser])
 
   return (
     <Routes>

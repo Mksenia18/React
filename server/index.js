@@ -190,6 +190,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
 
+app.get('/', (_req, res) => {
+  res.status(200).send('Habit Tracker API is running. Use /api/health to verify service health.')
+})
+
 app.get('/api/state', (req, res) => {
   const { dataByUserId } = readState()
   const userId = req.header('x-user-id')

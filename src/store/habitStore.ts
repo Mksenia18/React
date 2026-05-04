@@ -14,6 +14,7 @@ import {
   setCompletionForDate,
   subscribeUserCompletions,
   subscribeUserHabits,
+  updateHabitDocument,
 } from '../services/firebase/habitFirestore'
 
 export interface HabitStoreState extends AppState {
@@ -29,6 +30,13 @@ export interface HabitStoreState extends AppState {
   }) => void
   toggleCompletionForDate: (habitId: string, date: string) => void
   deleteHabit: (habitId: string) => void
+  updateHabit: (habitId: string, input: {
+    name: string
+    category: HabitCategory
+    targetFrequency: HabitFrequency
+    customDays?: DayOfWeek[]
+    streakFreezeDays?: number
+  }) => void
   initFromBackend: () => Promise<void>
   setUser: (userId: string | null) => void
 }
@@ -266,6 +274,26 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       set((current) => ({
         ...current,
         error: error instanceof Error ? error.message : 'Failed to delete habit',
+      }))
+    })
+  },
+
+  updateHabit: (habitId, input) => {
+    const uid = get().userId
+    if (!uid) return
+    const exists = get().habits.some((habit) => habit.id === habitId)
+    if (!exists) return
+
+    void updateHabitDocument(uid, habitId, {
+      name: input.name,
+      category: input.category,
+      targetFrequency: input.targetFrequency,
+      customDays: input.customDays,
+      streakFreezeDays: input.streakFreezeDays,
+    }).catch((error) => {
+      set((current) => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Failed to update habit',
       }))
     })
   },

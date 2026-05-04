@@ -10,12 +10,16 @@ interface HabitFormProps {
   values: HabitFormValues
   onChange: (next: HabitFormValues) => void
   onSubmit: () => void
+  mode?: 'create' | 'edit'
+  onCancelEdit?: () => void
 }
 
-export function HabitForm({ values, onChange, onSubmit }: HabitFormProps) {
+export function HabitForm({ values, onChange, onSubmit, mode = 'create', onCancelEdit }: HabitFormProps) {
+  const isEdit = mode === 'edit'
+
   return (
     <section>
-      <h2>Create a Habit</h2>
+      <h2>{isEdit ? 'Edit Habit' : 'Create a Habit'}</h2>
       <form
         onSubmit={(event) => {
           event.preventDefault()
@@ -59,7 +63,12 @@ export function HabitForm({ values, onChange, onSubmit }: HabitFormProps) {
           </select>
         </label>
 
-        <button type="submit">Add Habit</button>
+        <button type="submit">{isEdit ? 'Save Changes' : 'Add Habit'}</button>
+        {isEdit && onCancelEdit ? (
+          <button type="button" className="button-secondary" onClick={onCancelEdit}>
+            Cancel
+          </button>
+        ) : null}
       </form>
     </section>
   )

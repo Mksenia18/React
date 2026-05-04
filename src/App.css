@@ -255,6 +255,8 @@ section {
 
 .habit-actions {
   margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .habit-chart {
@@ -311,6 +313,16 @@ section {
 
 .button-danger:hover {
   box-shadow: 0 12px 20px rgba(239, 68, 68, 0.33);
+}
+
+.button-secondary {
+  background: #e5e7eb;
+  color: #111827;
+  box-shadow: 0 8px 16px rgba(17, 24, 39, 0.12);
+}
+
+.button-secondary:hover {
+  box-shadow: 0 12px 20px rgba(17, 24, 39, 0.18);
 }
 
 .empty-state {

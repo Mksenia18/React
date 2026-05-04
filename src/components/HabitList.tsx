@@ -17,6 +17,7 @@ interface HabitListProps {
   habitStats: HabitStats[]
   completions: HabitCompletion[]
   onDeleteHabit?: (habitId: string) => void
+  onEditHabit?: (habitId: string) => void
   showChart?: boolean
 }
 
@@ -25,6 +26,7 @@ interface HabitCardProps {
   stats?: HabitStats
   completions: HabitCompletion[]
   onDeleteHabit?: (habitId: string) => void
+  onEditHabit?: (habitId: string) => void
   showChart: boolean
   last7Days: string[]
 }
@@ -52,6 +54,7 @@ function HabitCard({
   stats,
   completions,
   onDeleteHabit,
+  onEditHabit,
   showChart,
   last7Days,
 }: HabitCardProps) {
@@ -69,22 +72,37 @@ function HabitCard({
         </div>
       )}
       {showChart ? <HabitChart habitId={habit.id} last7Days={last7Days} completions={completions} /> : null}
-      {onDeleteHabit ? (
+      {(onDeleteHabit || onEditHabit) ? (
         <div className="habit-actions">
-          <button
-            type="button"
-            className="button-danger"
-            onClick={() => onDeleteHabit(habit.id)}
-          >
-            Delete
-          </button>
+          {onEditHabit ? (
+            <button type="button" className="button-secondary" onClick={() => onEditHabit(habit.id)}>
+              Edit
+            </button>
+          ) : null}
+          {onDeleteHabit ? (
+            <button
+              type="button"
+              className="button-danger"
+              onClick={() => onDeleteHabit(habit.id)}
+            >
+              Delete
+            </button>
+          ) : null}
         </div>
       ) : null}
     </li>
   )
 }
 
-export function HabitList({ title, habits, habitStats, completions, onDeleteHabit, showChart = true }: HabitListProps) {
+export function HabitList({
+  title,
+  habits,
+  habitStats,
+  completions,
+  onDeleteHabit,
+  onEditHabit,
+  showChart = true,
+}: HabitListProps) {
   const last7Days = computeLast7Days()
 
   return (
@@ -103,6 +121,7 @@ export function HabitList({ title, habits, habitStats, completions, onDeleteHabi
               stats={habitStats.find((entry) => entry.habitId === habit.id)}
               completions={completions}
               onDeleteHabit={onDeleteHabit}
+              onEditHabit={onEditHabit}
               showChart={showChart}
               last7Days={last7Days}
             />

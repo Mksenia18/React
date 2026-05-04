@@ -106,6 +106,28 @@ export async function addHabitDocument(
   await setDoc(doc(db, habitsPath(uid), id), payload)
 }
 
+export async function updateHabitDocument(
+  uid: string,
+  habitId: string,
+  updates: {
+    name: string
+    category: HabitCategory
+    targetFrequency: HabitFrequency
+    customDays?: DayOfWeek[]
+    streakFreezeDays?: number
+  },
+): Promise<void> {
+  const db = getFirestoreDb()
+  const payload = stripUndefinedFields({
+    name: updates.name,
+    category: updates.category,
+    targetFrequency: updates.targetFrequency,
+    customDays: updates.customDays,
+    streakFreezeDays: updates.streakFreezeDays,
+  } as Record<string, unknown>)
+  await setDoc(doc(db, habitsPath(uid), habitId), payload, { merge: true })
+}
+
 export async function deleteHabitAndCompletions(uid: string, habitId: string): Promise<void> {
   const db = getFirestoreDb()
   const batch = writeBatch(db)
